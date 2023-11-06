@@ -1,0 +1,40 @@
+version: '3.7'
+
+services:
+  redash:
+    image: redash/redash:latest
+    ports:
+      - "5000:5000"
+      - "5678:5678"
+    environment:
+      - REDASH_REDIS_URL=redis://redis:6379/0
+      - REDASH_DATABASE_URL=postgresql://redashadmin@db/redash
+    command: dev_server
+    depends_on:
+      - db
+      - redis
+  scheduler:
+    image: redash/redash:latest
+    command: scheduler
+    environment:
+      - REDASH_REDIS_URL=redis://redis:6379/0
+      - REDASH_DATABASE_URL=postgresql://redashadmin@db/redash
+    depends_on:
+      - redash
+  worker:
+    image: redash/redash:latest
+    command: dev_worker
+    environment:
+      - REDASH_REDIS_URL=redis://redis:6379/0
+      - REDASH_DATABASE_URL=postgresql://redashadmin@db/redash
+    depends_on:
+       - redash
+  redis:
+    image: redis:7.2.3
+    restart: always
+  db:
+    image: postgres:16.0
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_DB=redash
+    restart: always
